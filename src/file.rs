@@ -176,9 +176,14 @@ impl FileHandle {
             // 连续写入每个分片，偏移随写入量前移。
             for slice in buf.buffers.iter() {
                 let write_size = inode.write_at(self.offset.get(), slice);
-                assert_eq!(write_size, slice.len());
+                if write_size == 0 {
+                    break;
+                }
                 self.offset.set(self.offset.get() + write_size);
                 total_write_size += write_size;
+                if write_size < slice.len() {
+                    break;
+                }
             }
             total_write_size as _
         } else {
